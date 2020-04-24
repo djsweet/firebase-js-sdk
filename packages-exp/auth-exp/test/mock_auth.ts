@@ -16,6 +16,7 @@
  */
 
 import { StsTokenManager } from '../src/core/user/token_manager';
+import { AuthImpl } from '../src/core/auth/auth_impl';
 import { UserImpl } from '../src/core/user/user_impl';
 import { Auth } from '../src/model/auth';
 import { User } from '../src/model/user';
