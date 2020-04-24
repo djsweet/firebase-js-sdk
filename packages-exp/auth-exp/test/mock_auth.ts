@@ -26,28 +26,17 @@ export const TEST_TOKEN_HOST = 'localhost/token';
 export const TEST_SCHEME = 'mock';
 export const TEST_KEY = 'test-api-key';
 
-export const mockAuth: Auth = ({
-  name: 'test-app',
-  config: {
+export const mockAuth: Auth = new AuthImpl(
+  'test-app',
+  {
     apiKey: TEST_KEY,
+    authDomain: TEST_AUTH_DOMAIN,
     apiHost: TEST_HOST,
     apiScheme: TEST_SCHEME,
-    tokenApiHost: TEST_TOKEN_HOST,
     sdkClientVersion: 'testSDK/0.0.0'
   },
-  _isInitialized: true,
-  currentUser: null,
-  async setPersistence() {},
-  async updateCurrentUser() {},
-  async signOut() {},
-  onAuthStateChanged() {
-    return () => {};
-  },
-  onIdTokenChanged() {
-    return () => {};
-  },
-  _notifyStateListeners() {}
-} as unknown) as Auth;
+  []
+);
 
 export function testUser(
   uid: string,
