@@ -98,16 +98,6 @@ import { DocumentReference } from '../../src/api/database';
 
 export type TestSnapshotVersion = number;
 
-/**
- * A string sentinel that can be used with patchMutation() to mark a field for
- * deletion.
- */
-export const DELETE_SENTINEL = '<DELETE>';
-
-const preConverter = (input: unknown): unknown => {
-  return input === DELETE_SENTINEL ? FieldValueImpl.delete() : input;
-};
-
 export function testUserDataWriter(): UserDataWriter {
   // We should pass in a proper Firestore instance, but for now, only
   // `ensureClientConfigured()` and `_databaseId` is used in our test usage of
@@ -129,10 +119,8 @@ export function testUserDataWriter(): UserDataWriter {
 export function testUserDataReader(useProto3Json?: boolean): UserDataReader {
   const databaseId = new DatabaseId('test-project');
   return new UserDataReader(
-    useProto3Json !== undefined
-      ? new JsonProtoSerializer(databaseId, { useProto3Json })
-      : PlatformSupport.getPlatform().newSerializer(databaseId),
-    preConverter
+    databaseId ,
+    useProto3Json !== undefined ? new JsonProtoSerializer(databaseId, { useProto3Json }) : undefined
   );
 }
 

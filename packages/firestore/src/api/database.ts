@@ -19,15 +19,15 @@ import * as firestore from '@firebase/firestore-types';
 
 import * as api from '../protos/firestore_proto_api';
 
-import { FirebaseApp } from '@firebase/app-types';
-import { _FirebaseApp, FirebaseService } from '@firebase/app-types/private';
-import { DatabaseId, DatabaseInfo } from '../core/database_info';
-import { ListenOptions } from '../core/event_manager';
+import {FirebaseApp} from '@firebase/app-types';
+import {_FirebaseApp, FirebaseService} from '@firebase/app-types/private';
+import {DatabaseId, DatabaseInfo} from '../core/database_info';
+import {ListenOptions} from '../core/event_manager';
 import {
   ComponentProvider,
   MemoryComponentProvider
 } from '../core/component_provider';
-import { FirestoreClient, PersistenceSettings } from '../core/firestore_client';
+import {FirestoreClient, PersistenceSettings} from '../core/firestore_client';
 import {
   Bound,
   Direction,
@@ -37,21 +37,21 @@ import {
   OrderBy,
   Query as InternalQuery
 } from '../core/query';
-import { Transaction as InternalTransaction } from '../core/transaction';
-import { ChangeType, ViewSnapshot } from '../core/view_snapshot';
-import { LruParams } from '../local/lru_garbage_collector';
-import { Document, MaybeDocument, NoDocument } from '../model/document';
-import { DocumentKey } from '../model/document_key';
-import { DeleteMutation, Mutation, Precondition } from '../model/mutation';
-import { FieldPath, ResourcePath } from '../model/path';
-import { isServerTimestamp } from '../model/server_timestamps';
-import { refValue } from '../model/values';
-import { PlatformSupport } from '../platform/platform';
-import { makeConstructorPrivate } from '../util/api';
-import { debugAssert, fail } from '../util/assert';
-import { AsyncObserver } from '../util/async_observer';
-import { AsyncQueue } from '../util/async_queue';
-import { Code, FirestoreError } from '../util/error';
+import {Transaction as InternalTransaction} from '../core/transaction';
+import {ChangeType, ViewSnapshot} from '../core/view_snapshot';
+import {LruParams} from '../local/lru_garbage_collector';
+import {Document, MaybeDocument, NoDocument} from '../model/document';
+import {DocumentKey} from '../model/document_key';
+import {DeleteMutation, Mutation, Precondition} from '../model/mutation';
+import {FieldPath, ResourcePath} from '../model/path';
+import {isServerTimestamp} from '../model/server_timestamps';
+import {refValue} from '../model/values';
+import {PlatformSupport} from '../platform/platform';
+import {makeConstructorPrivate} from '../util/api';
+import {debugAssert, fail} from '../util/assert';
+import {AsyncObserver} from '../util/async_observer';
+import {AsyncQueue} from '../util/async_queue';
+import {Code, FirestoreError} from '../util/error';
 import {
   invalidClassError,
   validateArgType,
@@ -69,10 +69,10 @@ import {
   validateStringEnum,
   valueDescription
 } from '../util/input_validation';
-import { getLogLevel, logError, LogLevel, setLogLevel } from '../util/log';
-import { AutoId } from '../util/misc';
-import { Deferred, Rejecter, Resolver } from '../util/promise';
-import { FieldPath as ExternalFieldPath } from './field_path';
+import {getLogLevel, logError, LogLevel, setLogLevel} from '../util/log';
+import {AutoId} from '../util/misc';
+import {Deferred, Rejecter, Resolver} from '../util/promise';
+import {FieldPath as ExternalFieldPath} from './field_path';
 
 import {
   CredentialsProvider,
@@ -89,15 +89,11 @@ import {
   PartialObserver,
   Unsubscribe
 } from './observer';
-import {
-  DocumentKeyReference,
-  fieldPathFromArgument,
-  UserDataReader
-} from './user_data_reader';
-import { UserDataWriter } from './user_data_writer';
-import { FirebaseAuthInternalName } from '@firebase/auth-interop-types';
-import { Provider } from '@firebase/component';
-import { FieldValue, FieldValueImpl } from './field_value';
+import {fieldPathFromArgument, UserDataReader} from './user_data_reader';
+import {UserDataWriter} from './user_data_writer';
+import {FirebaseAuthInternalName} from '@firebase/auth-interop-types';
+import {Provider} from '@firebase/component';
+import {FieldValue} from './field_value';
 
 // settings() defaults:
 const DEFAULT_HOST = 'firestore.googleapis.com';
@@ -316,7 +312,7 @@ export class Firestore implements firestore.FirebaseFirestore, FirebaseService {
 
     this._componentProvider = componentProvider;
     this._settings = new FirestoreSettings({});
-    this._dataReader = this.createDataReader(this._databaseId);
+    this._dataReader = new UserDataReader(this._databaseId);
   }
 
   settings(settingsLiteral: firestore.Settings): void {
@@ -499,29 +495,7 @@ export class Firestore implements firestore.FirebaseFirestore, FirebaseService {
 
     return this._firestoreClient.start(componentProvider, persistenceSettings);
   }
-
-  private createDataReader(databaseId: DatabaseId): UserDataReader {
-    const preConverter = (value: unknown): unknown => {
-      if (value instanceof DocumentReference) {
-        const thisDb = databaseId;
-        const otherDb = value.firestore._databaseId;
-        if (!otherDb.isEqual(thisDb)) {
-          throw new FirestoreError(
-            Code.INVALID_ARGUMENT,
-            'Document reference is for database ' +
-              `${otherDb.projectId}/${otherDb.database} but should be ` +
-              `for database ${thisDb.projectId}/${thisDb.database}`
-          );
-        }
-        return new DocumentKeyReference(databaseId, value._key);
-      } else {
-        return value;
-      }
-    };
-    const serializer = PlatformSupport.getPlatform().newSerializer(databaseId);
-    return new UserDataReader(serializer, preConverter);
-  }
-
+  
   private static databaseIdFromApp(app: FirebaseApp): DatabaseId {
     if (!contains(app.options, 'projectId')) {
       throw new FirestoreError(

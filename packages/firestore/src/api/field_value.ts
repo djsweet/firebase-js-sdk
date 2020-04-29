@@ -16,14 +16,21 @@
  */
 
 import * as firestore from '@firebase/firestore-types';
-
-import { makeConstructorPrivate } from '../util/api';
 import {
   validateArgType,
   validateAtLeastNumberOfArgs,
   validateExactNumberOfArgs,
   validateNoArgs
 } from '../util/input_validation';
+import { FieldTransform } from '../model/mutation';
+import {
+  ArrayRemoveTransformOperation,
+  ArrayUnionTransformOperation,
+  NumericIncrementTransformOperation,
+  ServerTimestampTransform
+} from '../model/transform_operation';
+import { ParseContext, parseData, UserDataSource } from './user_data_reader';
+import { fail } from '../util/assert';
 
 /**
  * An opaque base class for FieldValue sentinel objects in our public API,
@@ -31,11 +38,17 @@ import {
  */
 export abstract class FieldValueImpl {
   protected constructor(readonly _methodName: string) {}
+
+  abstract toFieldTransform(context: ParseContext): FieldTransform;
 }
 
 export class DeleteFieldValueImpl extends FieldValueImpl {
   constructor() {
     super('FieldValue.delete');
+  }
+
+  toFieldTransform(): never {
+    throw fail('DeleteFieldValueImpl does not have a field transform');
   }
 }
 
@@ -43,11 +56,28 @@ export class ServerTimestampFieldValueImpl extends FieldValueImpl {
   constructor() {
     super('FieldValue.serverTimestamp');
   }
+
+  toFieldTransform(context: ParseContext): FieldTransform {
+    return new FieldTransform(context.path!, ServerTimestampTransform.instance);
+  }
 }
 
 export class ArrayUnionFieldValueImpl extends FieldValueImpl {
-  constructor(readonly _elements: unknown[]) {
+  constructor(private readonly _elements: unknown[]) {
     super('FieldValue.arrayUnion');
+  }
+
+  toFieldTransform(context: ParseContext): FieldTransform {
+    // Although array transforms are used with writes, the actual elements
+    // being unioned or removed are not considered writes since they cannot
+    // contain any FieldValue sentinels, etc.
+    const parseContext = context.contextForDataSource(UserDataSource.Argument);
+    // Check why bang is ok
+    const parsedElements = this._elements.map(
+      (element, i) => parseData(element, parseContext.childContextForArray(i))!
+    );
+    const arrayUnion = new ArrayUnionTransformOperation(parsedElements);
+    return new FieldTransform(context.path!, arrayUnion);
   }
 }
 
@@ -55,11 +85,34 @@ export class ArrayRemoveFieldValueImpl extends FieldValueImpl {
   constructor(readonly _elements: unknown[]) {
     super('FieldValue.arrayRemove');
   }
+
+  toFieldTransform(context: ParseContext): FieldTransform {
+    // Although array transforms are used with writes, the actual elements
+    // being unioned or removed are not considered writes since they cannot
+    // contain any FieldValue sentinels, etc.
+    const parseContext = context.contextForDataSource(UserDataSource.Argument);
+    const parsedElements = this._elements.map(
+      (element, i) => parseData(element, parseContext.childContextForArray(i))!
+    );
+    const arrayUnion = new ArrayRemoveTransformOperation(parsedElements);
+    return new FieldTransform(context.path!, arrayUnion);
+  }
 }
 
 export class NumericIncrementFieldValueImpl extends FieldValueImpl {
-  constructor(readonly _operand: number) {
+  constructor(private readonly _operand: number) {
     super('FieldValue.increment');
+  }
+
+  toFieldTransform(context: ParseContext): FieldTransform {
+    context.contextForMethodName(this._methodName);
+    const operand = parseData(this._operand, context);
+    // assert that operand isn't null
+    const numericIncrement = new NumericIncrementTransformOperation(
+      context.serializer,
+      operand!
+    );
+    return new FieldTransform(context.path!, numericIncrement);
   }
 }
 

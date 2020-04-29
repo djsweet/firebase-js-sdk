@@ -121,10 +121,7 @@ export async function setDocument<T>(
   const firestore = reference.firestore;
   await firestore._ensureClientConfigured();
   const convertedValue = data; // TODO(support converter)
-  const dataReader = new UserDataReader(
-    PlatformSupport.getPlatform().newSerializer(firestore._databaseId),
-    v => userDataReaderPreConverter(firestore._databaseId, v)
-  );
+  const dataReader = new UserDataReader(firestore._databaseId);
   const parsed =
     options.merge || options.mergeFields
       ? dataReader.parseMergeData(
@@ -137,25 +134,4 @@ export async function setDocument<T>(
     firestore._datastore!,
     parsed.toMutations(reference._key, Precondition.none())
   );
-}
-
-function userDataReaderPreConverter(
-  databaseId: DatabaseId,
-  value: unknown
-): unknown {
-  if (value instanceof DocumentReference) {
-    const thisDb = databaseId;
-    const otherDb = value.firestore._databaseId;
-    if (!otherDb.isEqual(thisDb)) {
-      throw new FirestoreError(
-        Code.INVALID_ARGUMENT,
-        'Document reference is for database ' +
-          `${otherDb.projectId}/${otherDb.database} but should be ` +
-          `for database ${thisDb.projectId}/${thisDb.database}`
-      );
-    }
-    return new DocumentKeyReference(databaseId, value._key);
-  } else {
-    return value;
-  }
 }
