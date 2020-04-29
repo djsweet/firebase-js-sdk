@@ -342,10 +342,10 @@ export class UserDataReader {
     let fieldTransforms: FieldTransform[];
 
     if (!fieldPaths) {
-      fieldMask = FieldMask.fromArray(context.fieldMask);
+      fieldMask = new FieldMask(context.fieldMask);
       fieldTransforms = context.fieldTransforms;
     } else {
-      let validatedFieldPaths = new SortedSet<FieldPath>(FieldPath.comparator);
+      const validatedFieldPaths : FieldPath[]  = [];
 
       for (const stringOrFieldPath of fieldPaths) {
         let fieldPath: FieldPath;
@@ -370,10 +370,10 @@ export class UserDataReader {
           );
         }
 
-        validatedFieldPaths = validatedFieldPaths.add(fieldPath);
+        validatedFieldPaths.push(fieldPath);
       }
 
-      fieldMask = FieldMask.fromSet(validatedFieldPaths);
+      fieldMask = new FieldMask(validatedFieldPaths);
       fieldTransforms = context.fieldTransforms.filter(transform =>
         fieldMask.covers(transform.field)
       );
@@ -390,7 +390,7 @@ export class UserDataReader {
     const context = this.createContext(UserDataSource.Update, methodName);
     validatePlainObject('Data must be an object, but it was:', context, input);
 
-    let fieldMaskPaths = new SortedSet<FieldPath>(FieldPath.comparator);
+    const fieldMaskPaths : FieldPath[]  = [];
     const updateData = new ObjectValueBuilder();
     forEach(input as Dict<unknown>, (key, value) => {
       const path = fieldPathFromDotSeparatedString(methodName, key);
@@ -398,17 +398,17 @@ export class UserDataReader {
       const childContext = context.childContextForFieldPath(path);
       if (value instanceof DeleteFieldValueImpl) {
         // Add it to the field mask, but don't add anything to updateData.
-        fieldMaskPaths = fieldMaskPaths.add(path);
+       fieldMaskPaths.push(path);
       } else {
         const parsedValue = parseData(value, childContext);
         if (parsedValue != null) {
-          fieldMaskPaths = fieldMaskPaths.add(path);
+         fieldMaskPaths.push(path);
           updateData.set(path, parsedValue);
         }
       }
     });
 
-    const mask = FieldMask.fromSet(fieldMaskPaths);
+    const mask = new FieldMask(fieldMaskPaths);
     return new ParsedUpdateData(
       updateData.build(),
       mask,
@@ -445,7 +445,7 @@ export class UserDataReader {
       values.push(moreFieldsAndValues[i + 1]);
     }
 
-    let fieldMaskPaths = new SortedSet<FieldPath>(FieldPath.comparator);
+    const fieldMaskPaths : FieldPath[]  = [];
     const updateData = new ObjectValueBuilder();
 
     for (let i = 0; i < keys.length; ++i) {
@@ -453,17 +453,17 @@ export class UserDataReader {
       const childContext = context.childContextForFieldPath(path);
       if (value instanceof DeleteFieldValueImpl) {
         // Add it to the field mask, but don't add anything to updateData.
-        fieldMaskPaths = fieldMaskPaths.add(path);
+        fieldMaskPaths.push(path);
       } else {
         const parsedValue = parseData(value, childContext);
         if (parsedValue != null) {
-          fieldMaskPaths = fieldMaskPaths.add(path);
+          fieldMaskPaths.push(path);
           updateData.set(path, parsedValue);
         }
       }
     }
 
-    const mask = FieldMask.fromSet(fieldMaskPaths);
+    const mask = new FieldMask(fieldMaskPaths);
     return new ParsedUpdateData(
       updateData.build(),
       mask,

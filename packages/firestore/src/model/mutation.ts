@@ -32,7 +32,7 @@ import { DocumentKey } from './document_key';
 import { ObjectValue, ObjectValueBuilder } from './object_value';
 import { FieldPath } from './path';
 import { TransformOperation } from './transform_operation';
-import { arrayEquals } from '../util/misc';
+import {arrayEquals, primitiveComparator} from '../util/misc';
 
 /**
  * Provides a set of fields that can be used to partially patch a document.
@@ -45,20 +45,11 @@ import { arrayEquals } from '../util/misc';
  *             containing foo
  */
 export class FieldMask {
-  constructor(readonly fields: SortedSet<FieldPath>) {
+  constructor(readonly fields: FieldPath[]) {    
     // TODO(dimond): validation of FieldMask
+    this.fields.sort(FieldPath.comparator);
   }
-
-  static fromSet(fields: SortedSet<FieldPath>): FieldMask {
-    return new FieldMask(fields);
-  }
-
-  static fromArray(fields: FieldPath[]): FieldMask {
-    let fieldsAsSet = new SortedSet<FieldPath>(FieldPath.comparator);
-    fields.forEach(fieldPath => (fieldsAsSet = fieldsAsSet.add(fieldPath)));
-    return new FieldMask(fieldsAsSet);
-  }
-
+  
   /**
    * Verifies that `fieldPath` is included by at least one field in this field
    * mask.
@@ -76,7 +67,7 @@ export class FieldMask {
   }
 
   isEqual(other: FieldMask): boolean {
-    return this.fields.isEqual(other.fields);
+    return arrayEquals(this.fields, other.fields, (l, r) => l.isEqual(r))
   }
 }
 

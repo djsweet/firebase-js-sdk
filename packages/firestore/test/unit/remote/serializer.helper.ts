@@ -18,7 +18,7 @@
 import { expect } from 'chai';
 
 import { Blob } from '../../../src/api/blob';
-import { PublicFieldValue as FieldValue } from '../../../src/api/field_value';
+import { PublicFieldValue as FieldValue } from '../../../src/api/database';
 import { GeoPoint } from '../../../src/api/geo_point';
 import { Timestamp } from '../../../src/api/timestamp';
 import { DocumentKeyReference } from '../../../src/api/user_data_reader';
@@ -540,7 +540,7 @@ export function serializerTest(
         const expected: api.DocumentMask = {
           fieldPaths: ['foo.`bar.baz\\qux`']
         };
-        const mask = FieldMask.fromArray([
+        const mask = new FieldMask([
           FieldPath.fromServerFormat('foo.bar\\.baz\\\\qux')
         ]);
         const actual = s.toDocumentMask(mask);
@@ -554,7 +554,7 @@ export function serializerTest(
       // TODO(b/34988481): Implement correct escaping
       // eslint-disable-next-line no-restricted-properties
       it.skip('converts a weird path', () => {
-        const expected = FieldMask.fromArray([
+        const expected = new FieldMask([
           FieldPath.fromServerFormat('foo.bar\\.baz\\\\qux')
         ]);
         const proto: api.DocumentMask = { fieldPaths: ['foo.`bar.baz\\qux`'] };
