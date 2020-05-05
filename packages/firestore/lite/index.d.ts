@@ -42,9 +42,6 @@ export function initializeFirestore(
 // }
 
 export class FirebaseFirestore {
-  collection(collectionPath: string): CollectionReference<DocumentData>;
-
-  doc(documentPath: string): DocumentReference<DocumentData>;
 
   //   collectionGroup(collectionId: string): Query<DocumentData>;
 }
@@ -145,10 +142,9 @@ export interface SetOptions {
 export class DocumentReference<T = DocumentData> {
   //   readonly id: string;
   //   readonly firestore: FirebaseFirestore;
-  readonly parent: CollectionReference<T>;
   //   readonly path: string;
   //
-  collection(collectionPath: string): CollectionReference<DocumentData>;
+
   //
   //   isEqual(other: DocumentReference<T>): boolean;
   //
@@ -250,8 +246,6 @@ export class CollectionReference<T = DocumentData> extends Query<T> {
   // readonly id: string;
   // readonly parent: DocumentReference<DocumentData> | null;
   // readonly path: string;
-
-  doc(documentPath?: string): DocumentReference<T>;
   //
   // add(data: T): Promise<DocumentReference<T>>;
   //
@@ -288,6 +282,15 @@ export class FieldPath {
 //   firestore: FirebaseFirestore,
 //   updateFunction: (transaction: Transaction) => Promise<T>
 // ): Promise<T>;
+
+export function collection(parent:FirebaseFirestore|CollectionReference, relativePath: string) : CollectionReference;
+
+export function doc(parent: CollectionReference, relativePath?: string) : DocumentReference;
+
+export function parent(collection: CollectionReference) : DocumentReference;
+
+export function parent(docRef: DocumentReference) : CollectionReference;
+
 //
 // // MARK: DocumentReference methods
 //

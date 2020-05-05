@@ -44,6 +44,7 @@ import {
   validateArgType,
   validateExactNumberOfArgs
 } from '../../../src/util/input_validation';
+import {FirebaseFirestore} from "../../";
 
 /**
  * A reference to a particular document in a collection in the database.
@@ -54,22 +55,41 @@ export class DocumentReference<T = firestore.DocumentData>
   constructor(key: DocumentKey, readonly firestore: Firestore) {
     super(firestore._databaseId, key);
   }
+}
 
-  get parent(): CollectionReference<T> {
-    return new CollectionReference<T>(this._key.path.popLast(), this.firestore);
+export function collection(parent:Firestore|DocumentReference, relativePath: string) : CollectionReference {
+  if (relativePath.length == 0) {
+    throw new FirestoreError(
+      Code.INVALID_ARGUMENT,
+      'Must provide a non-empty collection name to collection()'
+    );
   }
-
-  collection(pathString: string): CollectionReference<firestore.DocumentData> {
-    if (pathString.length == 0) {
-      throw new FirestoreError(
-        Code.INVALID_ARGUMENT,
-        'Must provide a non-empty collection name to collection()'
-      );
-    }
-    const path = ResourcePath.fromString(pathString);
-    return new CollectionReference(this._key.path.child(path), this.firestore);
+  
+  if (parent instanceof  Firestore) {
+    return new CollectionReference(ResourcePath.fromString(relativePath), parent);
+  } else {
+    return new CollectionReference(parent._key.path.child(relativePath), parent.firestore);
   }
 }
+
+export function doc(parent: CollectionReference, relativePath?: string) : DocumentReference {
+  if (relativePath && relativePath.length == 0) {
+    throw new FirestoreError(
+      Code.INVALID_ARGUMENT,
+      'Must provide a non-empty document name to doc()'
+    );
+  }
+    return new DocumentReference(new DocumentKey(parent._path.child(relativePath || AutoId.newId())), parent.firestore);
+}
+
+export function parent(child: CollectionReference|DocumentReference) : DocumentReference|CollectionReference {
+  if (child instanceof CollectionReference) {
+    return new DocumentReference(new DocumentKey(child._path.popLast()), child.firestore);
+  } else {
+    return new CollectionReference(child._key.path.popLast(), child.firestore);
+  }
+}
+
 
 export class Query<T = firestore.DocumentData> implements firestore.Query<T> {
   constructor(public _query: InternalQuery, readonly firestore: Firestore) {}

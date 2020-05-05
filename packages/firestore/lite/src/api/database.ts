@@ -138,18 +138,8 @@ export class Firestore implements firestore.FirebaseFirestore, FirebaseService {
 
     return new DatabaseId(app.options.projectId!);
   }
-
-  collection(pathString: string): CollectionReference {
-    return new CollectionReference(ResourcePath.fromString(pathString), this);
-  }
-
-  doc(pathString: string): DocumentReference {
-    return new DocumentReference(
-      new DocumentKey(ResourcePath.fromString(pathString)),
-      this
-    );
-  }
 }
+
 
 export interface Settings {
   host?: string;
