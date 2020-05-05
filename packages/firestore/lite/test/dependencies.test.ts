@@ -134,6 +134,7 @@ const dependencies = new Map<string, string[]>();
 dependencies.set('FirebaseFirestore', [
   'AutoId',
   'CollectionReference',
+  'DocumentKeyReference',
   'DocumentReference',
   'DatabaseId',
   'DatabaseInfo',
@@ -154,6 +155,7 @@ dependencies.set('initializeFirestore', [
 ]);
 dependencies.set('DocumentSnapshot', [
   'DatabaseId',
+  'DocumentKeyReference',
   'DocumentReference',
   'DocumentSnapshot',
   'GeoPoint',
@@ -165,11 +167,13 @@ dependencies.set('DocumentSnapshot', [
 ]);
 dependencies.set(
   'CollectionReference',
-  ['DocumentReference', 'CollectionReference', 'AutoId', ...baseDependencies]!
+  [
+    'DocumentKeyReference','DocumentReference', 'CollectionReference', 'AutoId', ...baseDependencies]!
 );
 dependencies.set(
   'DocumentReference',
-  ['DocumentReference', ...baseDependencies]!
+  [
+    'DocumentKeyReference','DocumentReference', ...baseDependencies]!
 );
 dependencies.set('getDocument', [
   'Datastore',
@@ -192,44 +196,27 @@ dependencies.set('getDocument', [
 dependencies.set(
   'setDocument',
   [
-    'DocumentReference',
-    'ArrayRemoveFieldValueImpl',
-    'ArrayRemoveTransformOperation',
-    'ArrayUnionFieldValueImpl',
-    'ArrayUnionTransformOperation',
     'Datastore',
     'DatastoreImpl',
     'DeleteFieldValueImpl',
     'Document',
     'DocumentKeyReference',
     'FieldMask',
-    'FieldTransform',
     'FieldValueImpl',
     'GeoPoint',
-    'LLRBEmptyNode',
-    'LLRBNode',
     'MaybeDocument',
     'Mutation',
-    'NumericIncrementFieldValueImpl',
-    'NumericIncrementTransformOperation',
     'ObjectValueBuilder',
     'ParseContext',
     'ParsedSetData',
     'ParsedUpdateData',
     'PatchMutation',
     'Precondition',
-    'ServerTimestampFieldValueImpl',
-    'ServerTimestampTransform',
     'SetMutation',
     'SnapshotVersion',
-    'SortedMap',
-    'SortedMapIterator',
-    'SortedSet',
-    'SortedSetIterator',
     'TransformMutation',
     'UnknownDocument',
     'UserDataReader',
-    'coercedFieldValuesArray',
     'compareArrays',
     'compareBlobs',
     'compareGeoPoints',
@@ -242,20 +229,15 @@ dependencies.set(
     'fieldPathFromArgument',
     'fieldPathFromDotSeparatedString',
     'forEach',
+    "fieldMaskContains",
     'fromDotSeparatedString',
     'invokeCommitRpc',
-    'isArray',
-    'isDouble',
     'isEmpty',
-    'isInteger',
     'isWrite',
     'valueCompare',
     'validatePlainObject',
-    'userDataReaderPreConverter',
-    'serverTimestamp',
     'setDocument',
     'looksLikeJsonObject',
-    'isNumber',
     ...baseDependencies
   ]!
 );

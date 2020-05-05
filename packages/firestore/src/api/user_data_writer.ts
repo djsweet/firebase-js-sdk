@@ -19,7 +19,6 @@ import * as firestore from '@firebase/firestore-types';
 
 import * as api from '../protos/firestore_proto_api';
 
-import { DocumentReference, Firestore } from './database';
 import { Blob } from './blob';
 import { GeoPoint } from './geo_point';
 import { Timestamp } from './timestamp';

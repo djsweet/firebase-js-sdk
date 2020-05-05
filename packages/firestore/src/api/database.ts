@@ -89,7 +89,11 @@ import {
   PartialObserver,
   Unsubscribe
 } from './observer';
-import { fieldPathFromArgument, UserDataReader } from './user_data_reader';
+import {
+  DocumentKeyReference,
+  fieldPathFromArgument,
+  UserDataReader
+} from './user_data_reader';
 import { UserDataWriter } from './user_data_writer';
 import { FirebaseAuthInternalName } from '@firebase/auth-interop-types';
 import { Provider } from '@firebase/component';
@@ -910,15 +914,16 @@ export class WriteBatch implements firestore.WriteBatch {
 /**
  * A reference to a particular document in a collection in the database.
  */
-export class DocumentReference<T = firestore.DocumentData>
+export class DocumentReference<T = firestore.DocumentData> extends DocumentKeyReference
   implements firestore.DocumentReference<T> {
   private _firestoreClient: FirestoreClient;
 
   constructor(
-    public _key: DocumentKey,
-    readonly firestore: Firestore,
+    key: DocumentKey,
+     readonly firestore: Firestore,
     readonly _converter?: firestore.FirestoreDataConverter<T>
   ) {
+    super(firestore._databaseId, key);
     this._firestoreClient = this.firestore.ensureClientConfigured();
   }
 

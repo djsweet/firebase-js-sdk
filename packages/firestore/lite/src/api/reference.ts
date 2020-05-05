@@ -34,6 +34,7 @@ import {
 } from '../../../src/api/user_data_writer';
 import { Precondition } from '../../../src/model/mutation';
 import {
+  DocumentKeyReference,
   UserDataReader
 } from '../../../src/api/user_data_reader';
 
@@ -41,8 +42,11 @@ import {
  * A reference to a particular document in a collection in the database.
  */
 export class DocumentReference<T = firestore.DocumentData>
+  extends DocumentKeyReference
   implements firestore.DocumentReference<T> {
-  constructor(public _key: DocumentKey, readonly firestore: Firestore) {}
+  constructor(key: DocumentKey,  readonly firestore: Firestore) {
+    super( firestore._databaseId, key);
+  }
 }
 
 export class DocumentSnapshot<T = firestore.DocumentData> {
@@ -71,7 +75,7 @@ export class DocumentSnapshot<T = firestore.DocumentData> {
   }
 }
 
-export class CollectionReference<T = firestore.DocumentData>
+export class CollectionReference<T = firestore.DocumentData> 
   implements firestore.CollectionReference<T> {
   constructor(readonly _path: ResourcePath, readonly firestore: Firestore) {}
 
