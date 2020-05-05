@@ -18,9 +18,8 @@
 import { expect } from 'chai';
 
 import * as dependencies from './dependencies.json';
-import {forEach} from "../../src/util/obj";
-import {extractDependencies} from "./generate_deps";
-
+import { forEach } from '../../src/util/obj';
+import { extractDependencies } from './generate_deps';
 
 describe('Dependencies', () => {
   forEach(dependencies, (api, actualDependencies) => {

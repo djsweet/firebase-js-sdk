@@ -104,4 +104,3 @@ export class Blob {
     return this._byteString.isEqual(other._byteString);
   }
 }
-

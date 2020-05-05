@@ -104,7 +104,12 @@ const fakeFirestore: Firestore = {
 export type TestSnapshotVersion = number;
 
 export function testUserDataWriter(): UserDataWriter {
-  return new UserDataWriter(new DatabaseId('test-project'), /* timestampsInSnapshots= */  false, 'none', key => new DocumentReference(key, fakeFirestore));
+  return new UserDataWriter(
+    new DatabaseId('test-project'),
+    /* timestampsInSnapshots= */ false,
+    'none',
+    key => new DocumentReference(key, fakeFirestore)
+  );
 }
 
 export function testUserDataReader(useProto3Json?: boolean): UserDataReader {

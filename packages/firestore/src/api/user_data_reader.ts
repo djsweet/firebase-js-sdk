@@ -52,9 +52,8 @@ const RESERVED_FIELD_REGEX = /^__.*__$/;
 export class DocumentKeyReference {
   constructor(
     public readonly _databaseId: DatabaseId,
-    public readonly _key: DocumentKey,
-  ) {
-  }
+    public readonly _key: DocumentKey
+  ) {}
 }
 
 /** The result of parsing document data (e.g. for a setData call). */

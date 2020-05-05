@@ -15,15 +15,13 @@
  * limitations under the License.
  */
 
-
 import * as firestore from '../index.node';
 import * as rollup from 'rollup';
 import * as tmp from 'tmp';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as terser from 'terser';
-import {forEach} from "../../src/util/obj";
-
+import { forEach } from '../../src/util/obj';
 
 /**
  * This functions builds a simple JS app that only depends on the provided
@@ -32,7 +30,9 @@ import {forEach} from "../../src/util/obj";
  *
  * @return a list of dependencies for the given export
  */
-export async function extractDependencies(exportName: string): Promise<string[]> {
+export async function extractDependencies(
+  exportName: string
+): Promise<string[]> {
   const input = tmp.fileSync().name;
   const output = tmp.fileSync().name;
 
@@ -82,21 +82,21 @@ export async function extractDependencies(exportName: string): Promise<string[]>
   return dependencies;
 }
 
-async function buildJson() : Promise<string> {
-  const result: { [key:string] : string[] }= {};
-  
+async function buildJson(): Promise<string> {
+  const result: { [key: string]: string[] } = {};
+
   const deps: string[] = [];
   forEach(firestore, key => {
     deps.push(key);
   });
 
   for (const dep of deps) {
-    result[dep] =  await extractDependencies(dep);
+    result[dep] = await extractDependencies(dep);
   }
-  
-  return JSON.stringify(result ,null, 4);
+
+  return JSON.stringify(result, null, 4);
 }
 
 buildJson().then(json => {
-fs.writeFileSync(path.resolve(__dirname, 'dependencies.json'), json);
+  fs.writeFileSync(path.resolve(__dirname, 'dependencies.json'), json);
 });

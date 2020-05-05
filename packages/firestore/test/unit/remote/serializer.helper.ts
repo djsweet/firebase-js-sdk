@@ -18,12 +18,8 @@
 import { expect } from 'chai';
 
 import { Blob } from '../../../src/api/blob';
-import {
-  DocumentReference
-} from '../../../src/api/database';
-import {
-  PublicFieldValue as FieldValue,
-} from '../../../src/api/public_wrappers';
+import { DocumentReference } from '../../../src/api/database';
+import { PublicFieldValue as FieldValue } from '../../../src/api/public_wrappers';
 import { GeoPoint } from '../../../src/api/geo_point';
 import { Timestamp } from '../../../src/api/timestamp';
 import { DatabaseId } from '../../../src/core/database_info';

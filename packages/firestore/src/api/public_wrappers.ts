@@ -1,20 +1,22 @@
-
 // Export the classes with a private constructor (it will fail if invoked
 // at runtime). Note that this still allows instanceof checks.
 
 // We're treating the variables as class names, so disable checking for lower
 // case variable names.
-import {FieldValue} from "./field_value";
-import {Blob} from "./blob";
+import { FieldValue } from './field_value';
+import { Blob } from './blob';
 import {
   CollectionReference,
-  DocumentReference, DocumentSnapshot,
-  Firestore, Query, QueryDocumentSnapshot, QuerySnapshot,
+  DocumentReference,
+  DocumentSnapshot,
+  Firestore,
+  Query,
+  QueryDocumentSnapshot,
+  QuerySnapshot,
   Transaction,
   WriteBatch
-} from "./database";
-import {Code, FirestoreError} from "../util/error";
-
+} from './database';
+import { Code, FirestoreError } from '../util/error';
 
 /**
  * Helper function to prevent instantiation through the constructor.
@@ -50,7 +52,6 @@ export function makeConstructorPrivate<T extends Function>(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return PublicConstructor as any;
 }
-
 
 export const PublicFirestore = makeConstructorPrivate(
   Firestore,

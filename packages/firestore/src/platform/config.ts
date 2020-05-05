@@ -35,7 +35,7 @@ import {
 import { FieldPath } from '../api/field_path';
 import { GeoPoint } from '../api/geo_point';
 import { Timestamp } from '../api/timestamp';
-import {CACHE_SIZE_UNLIMITED, Firestore} from "../api/database";
+import { CACHE_SIZE_UNLIMITED, Firestore } from '../api/database';
 
 const firestoreNamespace = {
   Firestore: PublicFirestore,

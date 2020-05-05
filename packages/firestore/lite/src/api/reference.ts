@@ -29,9 +29,7 @@ import {
   invokeBatchGetDocumentsRpc,
   invokeCommitRpc
 } from '../../../src/remote/datastore';
-import {
-  UserDataWriter
-} from '../../../src/api/user_data_writer';
+import { UserDataWriter } from '../../../src/api/user_data_writer';
 import { Precondition } from '../../../src/model/mutation';
 import {
   DocumentKeyReference,
@@ -44,8 +42,8 @@ import {
 export class DocumentReference<T = firestore.DocumentData>
   extends DocumentKeyReference
   implements firestore.DocumentReference<T> {
-  constructor(key: DocumentKey,  readonly firestore: Firestore) {
-    super( firestore._databaseId, key);
+  constructor(key: DocumentKey, readonly firestore: Firestore) {
+    super(firestore._databaseId, key);
   }
 }
 
@@ -75,7 +73,7 @@ export class DocumentSnapshot<T = firestore.DocumentData> {
   }
 }
 
-export class CollectionReference<T = firestore.DocumentData> 
+export class CollectionReference<T = firestore.DocumentData>
   implements firestore.CollectionReference<T> {
   constructor(readonly _path: ResourcePath, readonly firestore: Firestore) {}
 

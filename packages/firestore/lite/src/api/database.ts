@@ -18,7 +18,7 @@
 import * as firestore from '../../';
 
 import { Provider } from '@firebase/component';
-import { FirebaseApp } from '@firebase/app-types'; 
+import { FirebaseApp } from '@firebase/app-types';
 import { Code, FirestoreError } from '../../../src/util/error';
 import { FirebaseService } from '@firebase/app-types/private';
 import { Datastore, newDatastore } from '../../../src/remote/datastore';
@@ -28,9 +28,9 @@ import { FirebaseAuthInternalName } from '@firebase/auth-interop-types';
 import {
   CredentialsProvider,
   FirebaseCredentialsProvider
-} from '../../../src/api/credentials'; 
+} from '../../../src/api/credentials';
 import { CollectionReference, DocumentReference } from './reference';
- import { ResourcePath } from '../../../src/model/path';
+import { ResourcePath } from '../../../src/model/path';
 import { DocumentKey } from '../../../src/model/document_key';
 
 // settings() defaults:
@@ -74,7 +74,7 @@ class FirestoreSettings {
  * The root reference to the database.
  */
 export class Firestore implements firestore.FirebaseFirestore, FirebaseService {
- readonly _databaseId: DatabaseId;
+  readonly _databaseId: DatabaseId;
   private readonly _firebaseApp: FirebaseApp;
   private _settings = new FirestoreSettings({});
   private _credentials: CredentialsProvider;
@@ -91,9 +91,9 @@ export class Firestore implements firestore.FirebaseFirestore, FirebaseService {
     app: FirebaseApp,
     authProvider: Provider<FirebaseAuthInternalName>
   ) {
-     this._firebaseApp = app;
-     this._databaseId = Firestore.databaseIdFromApp(app);
-     this._credentials = new FirebaseCredentialsProvider(authProvider);
+    this._firebaseApp = app;
+    this._databaseId = Firestore.databaseIdFromApp(app);
+    this._credentials = new FirebaseCredentialsProvider(authProvider);
   }
 
   get app(): FirebaseApp {
@@ -101,8 +101,8 @@ export class Firestore implements firestore.FirebaseFirestore, FirebaseService {
   }
 
   _configureClient(settings: FirestoreSettings): void {
-       this._settings = settings;
-    }
+    this._settings = settings;
+  }
 
   async _ensureClientConfigured(): Promise<void> {
     if (!this._datastore) {

@@ -15,21 +15,20 @@
  * limitations under the License.
  */
 
-import {
-  validateAtLeastNumberOfArgs,
-} from "../../../src/util/input_validation";
+import { validateAtLeastNumberOfArgs } from '../../../src/util/input_validation';
 import {
   ArrayRemoveFieldValueImpl,
   ArrayUnionFieldValueImpl,
   DeleteFieldValueImpl,
-   NumericIncrementFieldValueImpl, ServerTimestampFieldValueImpl
-} from "../../../src/api/field_value";
+  NumericIncrementFieldValueImpl,
+  ServerTimestampFieldValueImpl
+} from '../../../src/api/field_value';
 
 export function deleteField(): DeleteFieldValueImpl {
   return new DeleteFieldValueImpl();
 }
 
-export function  serverTimestamp(): ServerTimestampFieldValueImpl {
+export function serverTimestamp(): ServerTimestampFieldValueImpl {
   return new ServerTimestampFieldValueImpl();
 }
 
@@ -47,6 +46,6 @@ export function arrayRemove(...elements: unknown[]): ArrayRemoveFieldValueImpl {
   return new ArrayRemoveFieldValueImpl(elements);
 }
 
-export function  increment(n: number): NumericIncrementFieldValueImpl {
+export function increment(n: number): NumericIncrementFieldValueImpl {
   return new NumericIncrementFieldValueImpl(n);
 }

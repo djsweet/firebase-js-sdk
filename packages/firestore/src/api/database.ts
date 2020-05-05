@@ -97,7 +97,7 @@ import { UserDataWriter } from './user_data_writer';
 import { FirebaseAuthInternalName } from '@firebase/auth-interop-types';
 import { Provider } from '@firebase/component';
 import { FieldValue } from './field_value';
-import {Blob} from "./blob";
+import { Blob } from './blob';
 
 // settings() defaults:
 const DEFAULT_HOST = 'firestore.googleapis.com';
@@ -914,13 +914,14 @@ export class WriteBatch implements firestore.WriteBatch {
 /**
  * A reference to a particular document in a collection in the database.
  */
-export class DocumentReference<T = firestore.DocumentData> extends DocumentKeyReference
+export class DocumentReference<T = firestore.DocumentData>
+  extends DocumentKeyReference
   implements firestore.DocumentReference<T> {
   private _firestoreClient: FirestoreClient;
 
   constructor(
     key: DocumentKey,
-     readonly firestore: Firestore,
+    readonly firestore: Firestore,
     readonly _converter?: firestore.FirestoreDataConverter<T>
   ) {
     super(firestore._databaseId, key);
