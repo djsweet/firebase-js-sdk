@@ -17,31 +17,29 @@
 
 import * as firestore from '../../';
 
-import { hardAssert } from '../../../src/util/assert';
+import {hardAssert} from '../../../src/util/assert';
 
-import { Document } from '../../../src/model/document';
-import { DocumentKey } from '../../../src/model/document_key';
-import { Firestore } from './database';
-import { ResourcePath } from '../../../src/model/path';
-import { Code, FirestoreError } from '../../../src/util/error';
-import { AutoId } from '../../../src/util/misc';
+import {Document} from '../../../src/model/document';
+import {DocumentKey} from '../../../src/model/document_key';
+import {Firestore} from './database';
+import {ResourcePath} from '../../../src/model/path';
+import {Code, FirestoreError} from '../../../src/util/error';
+import {AutoId} from '../../../src/util/misc';
 import {
   invokeBatchGetDocumentsRpc,
-  invokeCommitRpc
+  invokeCommitRpc, invokeRunQueryRpc
 } from '../../../src/remote/datastore';
-import { UserDataWriter } from '../../../src/api/user_data_writer';
-import { DeleteMutation, Precondition } from '../../../src/model/mutation';
+import {DeleteMutation, Precondition} from '../../../src/model/mutation';
 import {
-  DocumentKeyReference,
+  DocumentKeyReference, fieldPathFromArgument,
   UserDataReader
 } from '../../../src/api/user_data_reader';
-import { UpdateData } from '../../';
-import { FieldPath } from '../../';
-import { FieldPath as ExternalFieldPath } from '../../../src/api/field_path';
+import {FieldPath as ExternalFieldPath} from '../../../src/api/field_path';
+import {DocumentSnapshot, QuerySnapshot} from "./snapshot";
 import {
-  validateAtLeastNumberOfArgs,
-  validateExactNumberOfArgs
-} from '../../../src/util/input_validation';
+  Query as InternalQuery
+} from "../../../src/core/query";
+import {ViewSnapshot} from "../../../src/core/view_snapshot";
 
 /**
  * A reference to a particular document in a collection in the database.
@@ -54,35 +52,20 @@ export class DocumentReference<T = firestore.DocumentData>
   }
 }
 
-export class DocumentSnapshot<T = firestore.DocumentData> {
+
+export class Query<T = firestore.DocumentData> implements firestore.Query<T> {
   constructor(
-    private _firestore: Firestore,
-    private _key: DocumentKey,
-    public _document: Document | null
-  ) {}
-
-  get exists(): boolean {
-    return this._document !== null;
-  }
-
-  data(): T | undefined {
-    if (!this._document) {
-      return undefined;
-    } else {
-      const userDataWriter = new UserDataWriter(
-        this._firestore._databaseId,
-        /* timestampsInSnapshots= */ false,
-        /* serverTimestampBehavior=*/ 'none',
-        key => new DocumentReference(key, this._firestore)
-      );
-      return userDataWriter.convertValue(this._document.toProto()) as T;
-    }
+    public _query: InternalQuery,
+    readonly firestore: Firestore,
+  ) {
   }
 }
 
-export class CollectionReference<T = firestore.DocumentData>
+export class CollectionReference<T = firestore.DocumentData> extends Query<T>
   implements firestore.CollectionReference<T> {
-  constructor(readonly _path: ResourcePath, readonly firestore: Firestore) {}
+  constructor(readonly _path: ResourcePath, readonly firestore: Firestore) {
+    super(InternalQuery.atPath(_path), firestore);
+  }
 
   doc(pathString?: string): DocumentReference<T> {
     if (pathString === '') {
@@ -180,4 +163,16 @@ export async function updateDocument(
     firestore._datastore!,
     parsed.toMutations(reference._key, Precondition.exists(true))
   );
+}
+
+
+export async function getQuery<T>(
+  query: Query<T>
+): Promise<QuerySnapshot> {
+  const firestore = query.firestore;
+  await firestore._ensureClientConfigured();
+  const result = await invokeRunQueryRpc(firestore._datastore!, 
+    query._query
+  );
+  return new QuerySnapshot<T>(firestore, query._query, result);
 }

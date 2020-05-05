@@ -166,11 +166,11 @@ export class DocumentSnapshot<T = DocumentData> {
   //
   // isEqual(other: DocumentSnapshot<T>): boolean;
 }
-//
-// export interface QueryDocumentSnapshot<T = DocumentData>
-//   extends DocumentSnapshot<T> {
-//   data(): T;
-// }
+
+export interface QueryDocumentSnapshot<T = DocumentData>
+  extends DocumentSnapshot<T> {
+  data(): T;
+}
 //
 // export type OrderByDirection = 'desc' | 'asc';
 //
@@ -185,7 +185,7 @@ export class DocumentSnapshot<T = DocumentData> {
 //   | 'array-contains-any';
 //
 export class Query<T = DocumentData> {
-  //   readonly firestore: FirebaseFirestore;
+     readonly firestore: FirebaseFirestore;
   //
   //   where(
   //     fieldPath: string | FieldPath,
@@ -218,24 +218,24 @@ export class Query<T = DocumentData> {
   //
   //   withConverter<U>(converter: FirestoreDataConverter<U>): Query<U>;
 }
-//
-// export class QuerySnapshot<T = DocumentData> {
-//   private constructor();
-//
-//   readonly query: Query<T>;
-//   readonly docs: Array<QueryDocumentSnapshot<T>>;
-//   readonly size: number;
-//   readonly empty: boolean;
-//
-//   docChanges(): Array<DocumentChange<T>>;
-//
-//   forEach(
-//     callback: (result: QueryDocumentSnapshot<T>) => void,
-//     thisArg?: any
-//   ): void;
-//
-//   isEqual(other: QuerySnapshot<T>): boolean;
-// }
+
+export class QuerySnapshot<T = DocumentData> {
+  private constructor();
+
+  readonly query: Query<T>;
+  readonly docs: Array<QueryDocumentSnapshot<T>>;
+  readonly size: number;
+  readonly empty: boolean;
+
+ // docChanges(): Array<DocumentChange<T>>;
+
+  forEach(
+    callback: (result: QueryDocumentSnapshot<T>) => void,
+    thisArg?: any
+  ): void;
+
+ // isEqual(other: QuerySnapshot<T>): boolean;
+}
 //
 // export type DocumentChangeType = 'added' | 'removed' | 'modified';
 //
@@ -245,7 +245,7 @@ export class Query<T = DocumentData> {
 //   readonly oldIndex: number;
 //   readonly newIndex: number;
 // }
-//
+
 export class CollectionReference<T = DocumentData> extends Query<T> {
   // readonly id: string;
   // readonly parent: DocumentReference<DocumentData> | null;
@@ -320,8 +320,8 @@ export function setDocument<T>(
 //   data: T
 // ): Promise<DocumentSnapshot<T>>;
 //
-// // MARK: CollectionReference methods
-// export function getDocuments<T>(query: Query<T>): Promise<QuerySnapshot<T>>;
+// MARK: CollectionReference methods
+export function getQuery<T>(query: Query<T>): Promise<QuerySnapshot<T>>;
 //
 // // MARK: FieldPath methods
 // export function documentId(): FieldPath;

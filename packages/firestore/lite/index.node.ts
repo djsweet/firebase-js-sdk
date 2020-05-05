@@ -27,10 +27,16 @@ export {
   setDocument,
   updateDocument,
   deleteDocument,
-  DocumentSnapshot,
+  getQuery,
   DocumentReference,
-  CollectionReference
+  CollectionReference,
 } from './src/api/reference';
+
+export {
+  DocumentSnapshot,
+  QueryDocumentSnapshot,
+  QuerySnapshot,
+} from './src/api/snapshot';
 
 export {
   deleteField,
