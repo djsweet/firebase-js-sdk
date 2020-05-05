@@ -1,19 +1,19 @@
-import * as firestore from "../../index";
-import {Firestore} from "./database";
-import {DocumentKey} from "../../../src/model/document_key";
-import {Document} from "../../../src/model/document";
-import {UserDataWriter} from "../../../src/api/user_data_writer";
-import {DocumentReference, Query} from "./reference";
-import {Query as InternalQuery} from "../../../src/core/query";
-import {ViewSnapshot} from "../../../src/core/view_snapshot";
+import * as firestore from '../../index';
+import { Firestore } from './database';
+import { DocumentKey } from '../../../src/model/document_key';
+import { Document } from '../../../src/model/document';
+import { UserDataWriter } from '../../../src/api/user_data_writer';
+import { DocumentReference, Query } from './reference';
+import { Query as InternalQuery } from '../../../src/core/query';
+import { ViewSnapshot } from '../../../src/core/view_snapshot';
 
-export class DocumentSnapshot<T = firestore.DocumentData> implements firestore.DocumentSnapshot {
+export class DocumentSnapshot<T = firestore.DocumentData>
+  implements firestore.DocumentSnapshot {
   constructor(
     private _firestore: Firestore,
     private _key: DocumentKey,
     public _document: Document | null
-  ) {
-  }
+  ) {}
 
   get exists(): boolean {
     return this._document !== null;
@@ -34,24 +34,22 @@ export class DocumentSnapshot<T = firestore.DocumentData> implements firestore.D
   }
 }
 
-export class QueryDocumentSnapshot<T = firestore.DocumentData> extends DocumentSnapshot implements firestore.QueryDocumentSnapshot  {
-  data() : T {
+export class QueryDocumentSnapshot<T = firestore.DocumentData>
+  extends DocumentSnapshot
+  implements firestore.QueryDocumentSnapshot {
+  data(): T {
     return super.data() as T;
   }
 }
 
-
-
 export class QuerySnapshot<T = firestore.DocumentData>
   implements firestore.QuerySnapshot<T> {
-
   constructor(
     private readonly _firestore: Firestore,
     private readonly _originalQuery: InternalQuery,
-    private readonly _docs: Document[],
-   // private readonly _converter?: firestore.FirestoreDataConverter<T> // TODO: Support converter
-  ) {
-  }
+    private readonly _docs: Document[]
+  ) // private readonly _converter?: firestore.FirestoreDataConverter<T> // TODO: Support converter
+  {}
 
   get docs(): Array<firestore.QueryDocumentSnapshot<T>> {
     const result: Array<firestore.QueryDocumentSnapshot<T>> = [];
@@ -81,10 +79,6 @@ export class QuerySnapshot<T = firestore.DocumentData>
   }
 
   private convertToDocumentImpl(doc: Document): QueryDocumentSnapshot<T> {
-    return new QueryDocumentSnapshot(
-      this._firestore,
-      doc.key,
-      doc
-    );
+    return new QueryDocumentSnapshot(this._firestore, doc.key, doc);
   }
 }

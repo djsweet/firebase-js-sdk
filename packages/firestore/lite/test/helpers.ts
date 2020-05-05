@@ -19,7 +19,7 @@ import * as firestore from '@firebase/firestore-types';
 import { Firestore, initializeFirestore } from '../src/api/database';
 import firebase from '../../test/integration/util/firebase_export';
 import { Provider, ComponentContainer } from '@firebase/component';
-import { DocumentReference } from '../src/api/reference';
+import { CollectionReference, DocumentReference } from '../src/api/reference';
 
 /* eslint-disable no-restricted-globals */
 
@@ -97,5 +97,18 @@ export function withTestDoc(
 ): Promise<void> {
   return withTestDb(db => {
     return fn(db.collection('test-collection').doc());
+  });
+}
+
+export function withTestCollection(
+  fn: (ref: CollectionReference) => Promise<void>
+): Promise<void> {
+  return withTestDb(db => {
+    return fn(
+      db
+        .collection('test-collection')
+        .doc()
+        .collection('nested')
+    );
   });
 }

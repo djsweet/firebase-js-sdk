@@ -145,10 +145,10 @@ export interface SetOptions {
 export class DocumentReference<T = DocumentData> {
   //   readonly id: string;
   //   readonly firestore: FirebaseFirestore;
-  //   readonly parent: CollectionReference<T>;
+  readonly parent: CollectionReference<T>;
   //   readonly path: string;
   //
-  //   collection(collectionPath: string): CollectionReference<DocumentData>;
+  collection(collectionPath: string): CollectionReference<DocumentData>;
   //
   //   isEqual(other: DocumentReference<T>): boolean;
   //
@@ -185,7 +185,7 @@ export interface QueryDocumentSnapshot<T = DocumentData>
 //   | 'array-contains-any';
 //
 export class Query<T = DocumentData> {
-     readonly firestore: FirebaseFirestore;
+  readonly firestore: FirebaseFirestore;
   //
   //   where(
   //     fieldPath: string | FieldPath,
@@ -227,14 +227,14 @@ export class QuerySnapshot<T = DocumentData> {
   readonly size: number;
   readonly empty: boolean;
 
- // docChanges(): Array<DocumentChange<T>>;
+  // docChanges(): Array<DocumentChange<T>>;
 
   forEach(
     callback: (result: QueryDocumentSnapshot<T>) => void,
     thisArg?: any
   ): void;
 
- // isEqual(other: QuerySnapshot<T>): boolean;
+  // isEqual(other: QuerySnapshot<T>): boolean;
 }
 //
 // export type DocumentChangeType = 'added' | 'removed' | 'modified';

@@ -29,13 +29,13 @@ export {
   deleteDocument,
   getQuery,
   DocumentReference,
-  CollectionReference,
+  CollectionReference
 } from './src/api/reference';
 
 export {
   DocumentSnapshot,
   QueryDocumentSnapshot,
-  QuerySnapshot,
+  QuerySnapshot
 } from './src/api/snapshot';
 
 export {

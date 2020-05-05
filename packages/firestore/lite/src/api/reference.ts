@@ -17,29 +17,33 @@
 
 import * as firestore from '../../';
 
-import {hardAssert} from '../../../src/util/assert';
+import { hardAssert } from '../../../src/util/assert';
 
-import {Document} from '../../../src/model/document';
-import {DocumentKey} from '../../../src/model/document_key';
-import {Firestore} from './database';
-import {ResourcePath} from '../../../src/model/path';
-import {Code, FirestoreError} from '../../../src/util/error';
-import {AutoId} from '../../../src/util/misc';
+import { Document } from '../../../src/model/document';
+import { DocumentKey } from '../../../src/model/document_key';
+import { Firestore } from './database';
+import { ResourcePath } from '../../../src/model/path';
+import { Code, FirestoreError } from '../../../src/util/error';
+import { AutoId } from '../../../src/util/misc';
 import {
   invokeBatchGetDocumentsRpc,
-  invokeCommitRpc, invokeRunQueryRpc
+  invokeCommitRpc,
+  invokeRunQueryRpc
 } from '../../../src/remote/datastore';
-import {DeleteMutation, Precondition} from '../../../src/model/mutation';
+import { DeleteMutation, Precondition } from '../../../src/model/mutation';
 import {
-  DocumentKeyReference, fieldPathFromArgument,
+  DocumentKeyReference,
+  fieldPathFromArgument,
   UserDataReader
 } from '../../../src/api/user_data_reader';
-import {FieldPath as ExternalFieldPath} from '../../../src/api/field_path';
-import {DocumentSnapshot, QuerySnapshot} from "./snapshot";
+import { FieldPath as ExternalFieldPath } from '../../../src/api/field_path';
+import { DocumentSnapshot, QuerySnapshot } from './snapshot';
+import { Query as InternalQuery } from '../../../src/core/query';
+import { ViewSnapshot } from '../../../src/core/view_snapshot';
 import {
-  Query as InternalQuery
-} from "../../../src/core/query";
-import {ViewSnapshot} from "../../../src/core/view_snapshot";
+  validateArgType,
+  validateExactNumberOfArgs
+} from '../../../src/util/input_validation';
 
 /**
  * A reference to a particular document in a collection in the database.
@@ -50,15 +54,25 @@ export class DocumentReference<T = firestore.DocumentData>
   constructor(key: DocumentKey, readonly firestore: Firestore) {
     super(firestore._databaseId, key);
   }
+
+  get parent(): CollectionReference<T> {
+    return new CollectionReference<T>(this._key.path.popLast(), this.firestore);
+  }
+
+  collection(pathString: string): CollectionReference<firestore.DocumentData> {
+    if (pathString.length == 0) {
+      throw new FirestoreError(
+        Code.INVALID_ARGUMENT,
+        'Must provide a non-empty collection name to collection()'
+      );
+    }
+    const path = ResourcePath.fromString(pathString);
+    return new CollectionReference(this._key.path.child(path), this.firestore);
+  }
 }
 
-
 export class Query<T = firestore.DocumentData> implements firestore.Query<T> {
-  constructor(
-    public _query: InternalQuery,
-    readonly firestore: Firestore,
-  ) {
-  }
+  constructor(public _query: InternalQuery, readonly firestore: Firestore) {}
 }
 
 export class CollectionReference<T = firestore.DocumentData> extends Query<T>
@@ -165,14 +179,9 @@ export async function updateDocument(
   );
 }
 
-
-export async function getQuery<T>(
-  query: Query<T>
-): Promise<QuerySnapshot> {
+export async function getQuery<T>(query: Query<T>): Promise<QuerySnapshot> {
   const firestore = query.firestore;
   await firestore._ensureClientConfigured();
-  const result = await invokeRunQueryRpc(firestore._datastore!, 
-    query._query
-  );
+  const result = await invokeRunQueryRpc(firestore._datastore!, query._query);
   return new QuerySnapshot<T>(firestore, query._query, result);
 }
