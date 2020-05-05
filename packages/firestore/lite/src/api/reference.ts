@@ -30,18 +30,12 @@ import {
   invokeCommitRpc
 } from '../../../src/remote/datastore';
 import {
-  ServerTimestampBehavior,
   UserDataWriter
 } from '../../../src/api/user_data_writer';
 import { Precondition } from '../../../src/model/mutation';
-import { invalidClassError } from '../../../src/util/input_validation';
-import { applyFirestoreDataConverter } from '../../../src/api/database';
 import {
-  DocumentKeyReference,
   UserDataReader
 } from '../../../src/api/user_data_reader';
-import { PlatformSupport } from '../../../src/platform/platform';
-import { DatabaseId } from '../../../src/core/database_info';
 
 /**
  * A reference to a particular document in a collection in the database.

@@ -1323,10 +1323,10 @@ export class DocumentSnapshot<T = firestore.DocumentData>
         return this._converter.fromFirestore(snapshot, options);
       } else {
         const userDataWriter = new UserDataWriter(
-          this._firestore,
+          this._firestore._databaseId,
           this._firestore._areTimestampsInSnapshotsEnabled(),
-          options.serverTimestamps,
-          /* converter= */ undefined
+          options.serverTimestamps || 'none',
+          key => new DocumentReference(key, this._firestore)
         );
         return userDataWriter.convertValue(this._document.toProto()) as T;
       }
@@ -1345,10 +1345,10 @@ export class DocumentSnapshot<T = firestore.DocumentData>
         .field(fieldPathFromArgument('DocumentSnapshot.get', fieldPath));
       if (value !== null) {
         const userDataWriter = new UserDataWriter(
-          this._firestore,
+          this._firestore._databaseId,
           this._firestore._areTimestampsInSnapshotsEnabled(),
-          options.serverTimestamps,
-          this._converter
+          options.serverTimestamps || 'none',
+          key => new DocumentReference(key, this._firestore, this._converter)
         );
         return userDataWriter.convertValue(value);
       }
