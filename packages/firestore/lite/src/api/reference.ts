@@ -30,18 +30,18 @@ import {
   invokeCommitRpc
 } from '../../../src/remote/datastore';
 import { UserDataWriter } from '../../../src/api/user_data_writer';
-import {DeleteMutation, Precondition} from '../../../src/model/mutation';
+import { DeleteMutation, Precondition } from '../../../src/model/mutation';
 import {
   DocumentKeyReference,
   UserDataReader
 } from '../../../src/api/user_data_reader';
-import {UpdateData} from "../../";
-import {FieldPath} from "../../";
-import {FieldPath as ExternalFieldPath} from "../../../src/api/field_path";
+import { UpdateData } from '../../';
+import { FieldPath } from '../../';
+import { FieldPath as ExternalFieldPath } from '../../../src/api/field_path';
 import {
   validateAtLeastNumberOfArgs,
   validateExactNumberOfArgs
-} from "../../../src/util/input_validation";
+} from '../../../src/util/input_validation';
 
 /**
  * A reference to a particular document in a collection in the database.
@@ -139,14 +139,14 @@ export async function setDocument<T>(
   );
 }
 
-
-export async function deleteDocument(reference: DocumentReference): Promise<void> {
+export async function deleteDocument(
+  reference: DocumentReference
+): Promise<void> {
   const firestore = reference.firestore;
   await firestore._ensureClientConfigured();
-  await invokeCommitRpc(
-    firestore._datastore!,
-    [      new DeleteMutation(reference._key, Precondition.none())]
-  );
+  await invokeCommitRpc(firestore._datastore!, [
+    new DeleteMutation(reference._key, Precondition.none())
+  ]);
 }
 
 export async function updateDocument(
@@ -173,10 +173,7 @@ export async function updateDocument(
       moreFieldsAndValues
     );
   } else {
-    parsed = dataReader.parseUpdateData(
-      'WriteBatch.update',
-      fieldOrUpdateData
-    );
+    parsed = dataReader.parseUpdateData('WriteBatch.update', fieldOrUpdateData);
   }
 
   await invokeCommitRpc(
