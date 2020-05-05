@@ -130,6 +130,33 @@ const baseDependencies = [
   'valueEquals'
 ];
 
+const fieldValueDependencies = [
+
+  "BasePath",
+  "DeleteFieldValueImpl",
+  "DocumentKey",
+  "FieldPath",
+  "FieldPath$1",
+  "FieldValueImpl",
+  "FirestoreError",
+  "PlatformSupport",
+  "ResourcePath",
+  "argToString",
+  "debugAssert",
+  "deleteField",
+  "fail",
+  "formatPlural",
+  "invalidClassError",
+  "isPlainObject",
+  "logError",
+  "ordinal",
+  "tryGetCustomObjectType",
+  "validateArgType",
+  "validateNamedArrayAtLeastNumberOfElements",
+  "validateType",
+  "valueDescription"
+  ]
+
 const dependencies = new Map<string, string[]>();
 dependencies.set('FirebaseFirestore', [
   'AutoId',
@@ -238,8 +265,16 @@ dependencies.set(
     'validatePlainObject',
     'setDocument',
     'looksLikeJsonObject',
+    "parseArray",
+    "parseData",
+    "parseObject",
+    "parseScalarValue",
+    "parseSentinelFieldValue",
     ...baseDependencies
   ]!
+);
+dependencies.set(
+  'deleteField', [...fieldValueDependencies]
 );
 
 describe('Dependencies', () => {

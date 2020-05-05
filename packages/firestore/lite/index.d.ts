@@ -261,12 +261,11 @@ export class CollectionReference<T = DocumentData> extends Query<T> {
   //   converter: FirestoreDataConverter<U>
   // ): CollectionReference<U>;
 }
-//
-// export class FieldValue {
-//   private constructor();
-//   isEqual(other: FieldValue): boolean;
-// }
-//
+
+export class FieldValue {
+  private constructor();
+}
+
 export class FieldPath {
   constructor(...fieldNames: string[]);
   isEqual(other: FieldPath): boolean;
@@ -327,11 +326,11 @@ export function setDocument<T>(
 // export function documentId(): FieldPath;
 //
 // // MARK: FieldValue methods
-// export function serverTimestamp(): FieldValue;
-// export function deleteField(): FieldValue;
-// export function arrayUnion(...elements: any[]): FieldValue;
-// export function arrayRemove(...elements: any[]): FieldValue;
-// export function increment(n: number): FieldValue;
+export function serverTimestamp(): FieldValue;
+export function deleteField(): FieldValue;
+export function arrayUnion(...elements: any[]): FieldValue;
+export function arrayRemove(...elements: any[]): FieldValue;
+export function increment(n: number): FieldValue;
 //
 // export type FirestoreErrorCode =
 //   | 'cancelled'

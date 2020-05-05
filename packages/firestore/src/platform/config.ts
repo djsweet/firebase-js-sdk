@@ -19,10 +19,8 @@ import { FirebaseApp, FirebaseNamespace } from '@firebase/app-types';
 import { FirebaseAuthInternalName } from '@firebase/auth-interop-types';
 import { _FirebaseNamespace } from '@firebase/app-types/private';
 import { Component, ComponentType, Provider } from '@firebase/component';
-import { PublicBlob } from '../api/blob';
 import {
-  CACHE_SIZE_UNLIMITED,
-  Firestore,
+  PublicBlob,
   PublicCollectionReference,
   PublicDocumentReference,
   PublicDocumentSnapshot,
@@ -33,10 +31,11 @@ import {
   PublicTransaction,
   PublicWriteBatch,
   PublicFieldValue
-} from '../api/database';
+} from '../api/public_wrappers';
 import { FieldPath } from '../api/field_path';
 import { GeoPoint } from '../api/geo_point';
 import { Timestamp } from '../api/timestamp';
+import {CACHE_SIZE_UNLIMITED, Firestore} from "../api/database";
 
 const firestoreNamespace = {
   Firestore: PublicFirestore,

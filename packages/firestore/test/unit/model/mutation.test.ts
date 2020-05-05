@@ -16,7 +16,7 @@
  */
 
 import { expect } from 'chai';
-import { PublicFieldValue as FieldValue } from '../../../src/api/database';
+import { PublicFieldValue as FieldValue } from '../../../src/api/public_wrappers';
 import { Timestamp } from '../../../src/api/timestamp';
 import { Document, MaybeDocument } from '../../../src/model/document';
 import { serverTimestamp } from '../../../src/model/server_timestamps';
