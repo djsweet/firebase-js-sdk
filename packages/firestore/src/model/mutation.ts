@@ -20,7 +20,6 @@ import * as api from '../protos/firestore_proto_api';
 import { Timestamp } from '../api/timestamp';
 import { SnapshotVersion } from '../core/snapshot_version';
 import { debugAssert, fail, hardAssert } from '../util/assert';
-import { SortedSet } from '../util/sorted_set';
 
 import {
   Document,
@@ -32,7 +31,7 @@ import { DocumentKey } from './document_key';
 import { ObjectValue, ObjectValueBuilder } from './object_value';
 import { FieldPath } from './path';
 import { TransformOperation } from './transform_operation';
-import {arrayEquals, primitiveComparator} from '../util/misc';
+import { arrayEquals } from '../util/misc';
 
 /**
  * Provides a set of fields that can be used to partially patch a document.
@@ -45,11 +44,17 @@ import {arrayEquals, primitiveComparator} from '../util/misc';
  *             containing foo
  */
 export class FieldMask {
-  constructor(readonly fields: FieldPath[]) {    
+  constructor(readonly fields: FieldPath[]) {
     // TODO(dimond): validation of FieldMask
-    this.fields.sort(FieldPath.comparator);
+    // Sort the field mask to support `FieldMask.isEqual()` and assert below.
+    fields.sort(FieldPath.comparator);
+    debugAssert(
+      !fields.some((v, i) => i !== 0 && v.isEqual(fields[i - 1])),
+      'FieldMask contains field that is not unique: ' +
+        fields.find((v, i) => i !== 0 && v.isEqual(fields[i - 1]))!
+    );
   }
-  
+
   /**
    * Verifies that `fieldPath` is included by at least one field in this field
    * mask.
@@ -57,17 +62,16 @@ export class FieldMask {
    * This is an O(n) operation, where `n` is the size of the field mask.
    */
   covers(fieldPath: FieldPath): boolean {
-    let found = false;
-    this.fields.forEach(fieldMaskPath => {
+    for (const fieldMaskPath of this.fields) {
       if (fieldMaskPath.isPrefixOf(fieldPath)) {
-        found = true;
+        return true;
       }
-    });
-    return found;
+    }
+    return false;
   }
 
   isEqual(other: FieldMask): boolean {
-    return arrayEquals(this.fields, other.fields, (l, r) => l.isEqual(r))
+    return arrayEquals(this.fields, other.fields, (l, r) => l.isEqual(r));
   }
 }
 

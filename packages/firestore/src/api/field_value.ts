@@ -30,7 +30,7 @@ import {
   ServerTimestampTransform
 } from '../model/transform_operation';
 import { ParseContext, parseData, UserDataSource } from './user_data_reader';
-import { fail } from '../util/assert';
+import { debugAssert } from '../util/assert';
 
 /**
  * An opaque base class for FieldValue sentinel objects in our public API,
@@ -39,7 +39,9 @@ import { fail } from '../util/assert';
 export abstract class FieldValueImpl {
   protected constructor(readonly _methodName: string) {}
 
-  abstract toFieldTransform(context: ParseContext): FieldTransform;
+  abstract toFieldTransform(context: ParseContext): FieldTransform | null;
+
+  abstract isEqual(other: FieldValue): boolean;
 }
 
 export class DeleteFieldValueImpl extends FieldValueImpl {
@@ -47,8 +49,33 @@ export class DeleteFieldValueImpl extends FieldValueImpl {
     super('FieldValue.delete');
   }
 
-  toFieldTransform(): never {
-    throw fail('DeleteFieldValueImpl does not have a field transform');
+  toFieldTransform(context: ParseContext): null {
+    if (context.dataSource === UserDataSource.MergeSet) {
+      // No transform to add for a delete, but we need to add it to our
+      // fieldMask so it gets deleted.
+      context.fieldMask.push(context.path!);
+    } else if (context.dataSource === UserDataSource.Update) {
+      debugAssert(
+        context.path!.length > 0,
+        'FieldValue.delete() at the top level should have already' +
+          ' been handled.'
+      );
+      throw context.createError(
+        'FieldValue.delete() can only appear at the top level ' +
+          'of your update data'
+      );
+    } else {
+      // We shouldn't encounter delete sentinels for queries or non-merge set() calls.
+      throw context.createError(
+        'FieldValue.delete() cannot be used with set() unless you pass ' +
+          '{merge:true}'
+      );
+    }
+    return null;
+  }
+
+  isEqual(other: FieldValue): boolean {
+    return other instanceof DeleteFieldValueImpl;
   }
 }
 
@@ -60,6 +87,10 @@ export class ServerTimestampFieldValueImpl extends FieldValueImpl {
   toFieldTransform(context: ParseContext): FieldTransform {
     return new FieldTransform(context.path!, ServerTimestampTransform.instance);
   }
+
+  isEqual(other: FieldValue): boolean {
+    return other instanceof ServerTimestampFieldValueImpl;
+  }
 }
 
 export class ArrayUnionFieldValueImpl extends FieldValueImpl {
@@ -69,15 +100,22 @@ export class ArrayUnionFieldValueImpl extends FieldValueImpl {
 
   toFieldTransform(context: ParseContext): FieldTransform {
     // Although array transforms are used with writes, the actual elements
-    // being unioned or removed are not considered writes since they cannot
+    // being uniomed or removed are not considered writes since they cannot
     // contain any FieldValue sentinels, etc.
-    const parseContext = context.contextForDataSource(UserDataSource.Argument);
-    // Check why bang is ok
+    const parseContext = context.contextWith({
+      dataSource: UserDataSource.Argument,
+      methodName: this._methodName
+    });
     const parsedElements = this._elements.map(
       (element, i) => parseData(element, parseContext.childContextForArray(i))!
     );
     const arrayUnion = new ArrayUnionTransformOperation(parsedElements);
     return new FieldTransform(context.path!, arrayUnion);
+  }
+
+  isEqual(other: FieldValue): boolean {
+    // TODO(mrschmidt): Implement isEquals
+    return this === other;
   }
 }
 
@@ -90,12 +128,20 @@ export class ArrayRemoveFieldValueImpl extends FieldValueImpl {
     // Although array transforms are used with writes, the actual elements
     // being unioned or removed are not considered writes since they cannot
     // contain any FieldValue sentinels, etc.
-    const parseContext = context.contextForDataSource(UserDataSource.Argument);
+    const parseContext = context.contextWith({
+      dataSource: UserDataSource.Argument,
+      methodName: this._methodName
+    });
     const parsedElements = this._elements.map(
       (element, i) => parseData(element, parseContext.childContextForArray(i))!
     );
     const arrayUnion = new ArrayRemoveTransformOperation(parsedElements);
     return new FieldTransform(context.path!, arrayUnion);
+  }
+
+  isEqual(other: FieldValue): boolean {
+    // TODO(mrschmidt): Implement isEquals
+    return this === other;
   }
 }
 
@@ -105,14 +151,18 @@ export class NumericIncrementFieldValueImpl extends FieldValueImpl {
   }
 
   toFieldTransform(context: ParseContext): FieldTransform {
-    context.contextForMethodName(this._methodName);
-    const operand = parseData(this._operand, context);
-    // assert that operand isn't null
+    context.contextWith({ methodName: this._methodName });
+    const operand = parseData(this._operand, context)!;
     const numericIncrement = new NumericIncrementTransformOperation(
       context.serializer,
-      operand!
+      operand
     );
     return new FieldTransform(context.path!, numericIncrement);
+  }
+
+  isEqual(other: FieldValue): boolean {
+    // TODO(mrschmidt): Implement isEquals
+    return this === other;
   }
 }
 

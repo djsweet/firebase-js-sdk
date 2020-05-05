@@ -37,31 +37,16 @@ import { Code, FirestoreError } from '../util/error';
 import { isPlainObject, valueDescription } from '../util/input_validation';
 import { Dict, forEach, isEmpty } from '../util/obj';
 import { ObjectValue, ObjectValueBuilder } from '../model/object_value';
-import {
-  ArrayRemoveTransformOperation,
-  ArrayUnionTransformOperation,
-  NumericIncrementTransformOperation,
-  ServerTimestampTransform
-} from '../model/transform_operation';
 import { JsonProtoSerializer } from '../remote/serializer';
-import { SortedSet } from '../util/sorted_set';
 import { Blob } from './blob';
 import {
   FieldPath as ExternalFieldPath,
   fromDotSeparatedString
 } from './field_path';
-import {
-  ArrayRemoveFieldValueImpl,
-  ArrayUnionFieldValueImpl,
-  DeleteFieldValueImpl,
-  FieldValueImpl,
-  NumericIncrementFieldValueImpl,
-  ServerTimestampFieldValueImpl
-} from './field_value';
+import { DeleteFieldValueImpl, FieldValueImpl } from './field_value';
 import { GeoPoint } from './geo_point';
-import { User } from '../auth/user';
-import {DocumentReference} from "../../lite/src/api/reference";
-import {PlatformSupport} from "../platform/platform";
+import { PlatformSupport } from '../platform/platform';
+import { DocumentReference } from './database';
 
 const RESERVED_FIELD_REGEX = /^__.*__$/;
 
@@ -143,24 +128,21 @@ function isWrite(dataSource: UserDataSource): boolean {
   }
 }
 
-interface ParseContextConfiguration {
+/** Contains the settings that are mutated as we parse user data. */
+interface ContextSettings {
   /** Indicates what kind of API method this data came from. */
-  dataSource: UserDataSource;
-  /** The serializer to use for user data conversion. */
-  serializer: JsonProtoSerializer;
-  /** The database ID of the instance. */
-  databaseId: DatabaseId;
+  readonly dataSource: UserDataSource;
   /** The name of the method the user called to create the ParseContext. */
-  methodName: string;
-  /**  
-   * A path within the object being parsed. This could be an empty path (in 
-   * which case the context represents the root of the data being parsed), or a 
-   * nonempty path (indicating the context represents a nested location within 
+  readonly methodName: string;
+  /**
+   * A path within the object being parsed. This could be an empty path (in
+   * which case the context represents the root of the data being parsed), or a
+   * nonempty path (indicating the context represents a nested location within
    * the data).
    */
-  path: FieldPath | null;
-  /** Whether or not this context corresponds to an element of an array.*/
-  arrayElement: boolean;
+  readonly path: FieldPath | null;
+  /** Whether or not this context corresponds to an element of an array. */
+  readonly arrayElement: boolean;
 }
 
 /** A "context" object passed around while parsing user data. */
@@ -170,7 +152,9 @@ export class ParseContext {
   /**
    * Initializes a ParseContext with the given source and path.
    *
-   * @param configuration The settings for the parser.
+   * @param settings The settings for the parser.
+   * @param databaseId The database ID of the Firestore instance.
+   * @param serializer The serializer to use to generate the Value proto.
    * @param fieldTransforms A mutable list of field transforms encountered while
    *     parsing the data.
    * @param fieldMask A mutable list of field paths encountered while parsing
@@ -182,7 +166,9 @@ export class ParseContext {
    * compromised).
    */
   constructor(
-    private readonly configuration: ParseContextConfiguration,
+    readonly settings: ContextSettings,
+    readonly databaseId: DatabaseId,
+    readonly serializer: JsonProtoSerializer,
     fieldTransforms?: FieldTransform[],
     fieldMask?: FieldPath[]
   ) {
@@ -196,43 +182,34 @@ export class ParseContext {
   }
 
   get path(): FieldPath | null {
-    return this.configuration.path;
+    return this.settings.path;
   }
 
   get dataSource(): UserDataSource {
-    return this.configuration.dataSource;
+    return this.settings.dataSource;
   }
 
-  get arrayElement(): boolean {
-    return this.configuration.arrayElement;
-  }
-
-  get serializer(): JsonProtoSerializer {
-    return this.configuration.serializer;
-  }
-
-  get databaseId(): DatabaseId {
-    return this.configuration.databaseId;
-  }
-
-  /** Returns a new context with the specified overwritten settings. */
-  private reconfigure(configuration: Partial<ParseContextConfiguration>) {
+  /** Returns a new context with the specified settings overwritten. */
+  contextWith(configuration: Partial<ContextSettings>): ParseContext {
     return new ParseContext(
-      { ...this.configuration, ...configuration },
+      { ...this.settings, ...configuration },
+      this.databaseId,
+      this.serializer,
       this.fieldTransforms,
       this.fieldMask
     );
   }
+
   childContextForField(field: string): ParseContext {
     const childPath = this.path == null ? null : this.path.child(field);
-    const context = this.reconfigure({ path: childPath, arrayElement: false });
+    const context = this.contextWith({ path: childPath, arrayElement: false });
     context.validatePathSegment(field);
     return context;
   }
 
   childContextForFieldPath(field: FieldPath): ParseContext {
     const childPath = this.path == null ? null : this.path.child(field);
-    const context = this.reconfigure({ path: childPath, arrayElement: false });
+    const context = this.contextWith({ path: childPath, arrayElement: false });
     context.validatePath();
     return context;
   }
@@ -240,15 +217,7 @@ export class ParseContext {
   childContextForArray(index: number): ParseContext {
     // TODO(b/34871131): We don't support array paths right now; so make path
     // null.
-    return this.reconfigure({ path: null, arrayElement: true });
-  }
-
-  contextForDataSource(dataSource: UserDataSource): ParseContext {
-    return this.reconfigure({ dataSource });
-  }
-
-  contextForMethodName(methodName: string): ParseContext {
-    return this.reconfigure({ methodName });
+    return this.contextWith({ path: null, arrayElement: true });
   }
 
   createError(reason: string): Error {
@@ -258,7 +227,7 @@ export class ParseContext {
         : ` (found in field ${this.path.toString()})`;
     return new FirestoreError(
       Code.INVALID_ARGUMENT,
-      `Function ${this.configuration.methodName}() called with invalid data. ` +
+      `Function ${this.settings.methodName}() called with invalid data. ` +
         reason +
         fieldDescription
     );
@@ -296,23 +265,18 @@ export class ParseContext {
 }
 
 /**
- * A placeholder object for DocumentReferences in this file, in order to
- * avoid a circular dependency. See the comments for `DataPreConverter` for
- * the full context.
- */
-export class DocumentKeyReference {
-  constructor(public databaseId: DatabaseId, public key: DocumentKey) {}
-}
-
-/**
  * Helper for parsing raw user input (provided via the API) into internal model
  * classes.
  */
 export class UserDataReader {
   private readonly serializer: JsonProtoSerializer;
-  
-  constructor(private readonly databaseId: DatabaseId, serializer? : JsonProtoSerializer) {
-    this.serializer = serializer ?? PlatformSupport.getPlatform().newSerializer(databaseId);
+
+  constructor(
+    private readonly databaseId: DatabaseId,
+    serializer?: JsonProtoSerializer
+  ) {
+    this.serializer =
+      serializer || PlatformSupport.getPlatform().newSerializer(databaseId);
   }
 
   /** Parse document data from a non-merge set() call. */
@@ -345,7 +309,7 @@ export class UserDataReader {
       fieldMask = new FieldMask(context.fieldMask);
       fieldTransforms = context.fieldTransforms;
     } else {
-      const validatedFieldPaths : FieldPath[]  = [];
+      const validatedFieldPaths: FieldPath[] = [];
 
       for (const stringOrFieldPath of fieldPaths) {
         let fieldPath: FieldPath;
@@ -370,7 +334,9 @@ export class UserDataReader {
           );
         }
 
-        validatedFieldPaths.push(fieldPath);
+        if (!fieldMaskContains(validatedFieldPaths, fieldPath)) {
+          validatedFieldPaths.push(fieldPath);
+        }
       }
 
       fieldMask = new FieldMask(validatedFieldPaths);
@@ -390,7 +356,7 @@ export class UserDataReader {
     const context = this.createContext(UserDataSource.Update, methodName);
     validatePlainObject('Data must be an object, but it was:', context, input);
 
-    const fieldMaskPaths : FieldPath[]  = [];
+    const fieldMaskPaths: FieldPath[] = [];
     const updateData = new ObjectValueBuilder();
     forEach(input as Dict<unknown>, (key, value) => {
       const path = fieldPathFromDotSeparatedString(methodName, key);
@@ -398,11 +364,11 @@ export class UserDataReader {
       const childContext = context.childContextForFieldPath(path);
       if (value instanceof DeleteFieldValueImpl) {
         // Add it to the field mask, but don't add anything to updateData.
-       fieldMaskPaths.push(path);
+        fieldMaskPaths.push(path);
       } else {
         const parsedValue = parseData(value, childContext);
         if (parsedValue != null) {
-         fieldMaskPaths.push(path);
+          fieldMaskPaths.push(path);
           updateData.set(path, parsedValue);
         }
       }
@@ -445,20 +411,25 @@ export class UserDataReader {
       values.push(moreFieldsAndValues[i + 1]);
     }
 
-    const fieldMaskPaths : FieldPath[]  = [];
+    const fieldMaskPaths: FieldPath[] = [];
     const updateData = new ObjectValueBuilder();
 
-    for (let i = 0; i < keys.length; ++i) {
-      const path = keys[i];
-      const childContext = context.childContextForFieldPath(path);
-      if (value instanceof DeleteFieldValueImpl) {
-        // Add it to the field mask, but don't add anything to updateData.
-        fieldMaskPaths.push(path);
-      } else {
-        const parsedValue = parseData(value, childContext);
-        if (parsedValue != null) {
+    // We iterate in reverse order to pick the last value for a field if the
+    // user specified the field multiple times.
+    for (let i = keys.length - 1; i >= 0; --i) {
+      if (!fieldMaskContains(fieldMaskPaths, keys[i])) {
+        const path = keys[i];
+        const value = values[i];
+        const childContext = context.childContextForFieldPath(path);
+        if (value instanceof DeleteFieldValueImpl) {
+          // Add it to the field mask, but don't add anything to updateData.
           fieldMaskPaths.push(path);
-          updateData.set(path, parsedValue);
+        } else {
+          const parsedValue = parseData(value, childContext);
+          if (parsedValue != null) {
+            fieldMaskPaths.push(path);
+            updateData.set(path, parsedValue);
+          }
         }
       }
     }
@@ -471,15 +442,21 @@ export class UserDataReader {
     );
   }
 
-  private createContext(dataSource: UserDataSource, methodName: string) {
-    return new ParseContext({
-      dataSource,
-      databaseId: this.databaseId,
-      serializer: this.serializer,
-      methodName,
-      path: FieldPath.EMPTY_PATH,
-      arrayElement: false
-    });
+  /** Creates a new top-level parse context. */
+  private createContext(
+    dataSource: UserDataSource,
+    methodName: string
+  ): ParseContext {
+    return new ParseContext(
+      {
+        dataSource,
+        methodName,
+        path: FieldPath.EMPTY_PATH,
+        arrayElement: false
+      },
+      this.databaseId,
+      this.serializer
+    );
   }
 
   /**
@@ -509,7 +486,7 @@ export class UserDataReader {
 }
 
 /**
- * Internal helper for parsing user data.
+ * Parses user data to Protobuf Values.
  *
  * @param input Data to be parsed.
  * @param context A context object representing the current path being parsed,
@@ -547,7 +524,7 @@ export function parseData(
       // contain additional arrays (each representing an individual field
       // value), so we disable this validation.
       if (
-        context.arrayElement &&
+        context.settings.arrayElement &&
         context.dataSource !== UserDataSource.ArrayArgument
       ) {
         throw context.createError('Nested arrays are not supported');
@@ -622,31 +599,8 @@ function parseSentinelFieldValue(
     );
   }
 
-  if (value instanceof DeleteFieldValueImpl) {
-    // This is a delete
-    if (context.dataSource === UserDataSource.MergeSet) {
-      // No transform to add for a delete, but we need to add it to our
-      // fieldMask so it gets deleted.
-      context.fieldMask.push(context.path);
-    } else if (context.dataSource === UserDataSource.Update) {
-      debugAssert(
-        context.path.length > 0,
-        'FieldValue.delete() at the top level should have already' +
-          ' been handled.'
-      );
-      throw context.createError(
-        'FieldValue.delete() can only appear at the top level ' +
-          'of your update data'
-      );
-    } else {
-      // We shouldn't encounter delete sentinels for queries or non-merge set() calls.
-      throw context.createError(
-        'FieldValue.delete() cannot be used with set() unless you pass ' +
-          '{merge:true}'
-      );
-    }
-  } else {
-    const fieldTransform = value.toFieldTransform(context);
+  const fieldTransform = value.toFieldTransform(context);
+  if (fieldTransform) {
     context.fieldTransforms.push(fieldTransform);
   }
 }
@@ -687,16 +641,15 @@ function parseScalarValue(value: unknown, context: ParseContext): api.Value {
   } else if (value instanceof Blob) {
     return { bytesValue: context.serializer.toBytes(value) };
   } else if (value instanceof DocumentReference) {
-      const thisDb = context.databaseId;
-      const otherDb = value.firestore._databaseId;
-      if (!otherDb.isEqual(thisDb)) {
-        throw new FirestoreError(
-          Code.INVALID_ARGUMENT,
-          'Document reference is for database ' +
+    const thisDb = context.databaseId;
+    const otherDb = value.firestore._databaseId;
+    if (!otherDb.isEqual(thisDb)) {
+      throw context.createError(
+        'Document reference is for database ' +
           `${otherDb.projectId}/${otherDb.database} but should be ` +
           `for database ${thisDb.projectId}/${thisDb.database}`
-        );
-      }
+      );
+    }
     return {
       referenceValue: context.serializer.toResourceName(
         value._key.path,
@@ -709,6 +662,7 @@ function parseScalarValue(value: unknown, context: ParseContext): api.Value {
     );
   }
 }
+
 /**
  * Checks whether an object looks like a JSON object that should be converted
  * into a struct. Normal class/prototype instances are considered to look like
@@ -725,12 +679,10 @@ function looksLikeJsonObject(input: unknown): boolean {
     !(input instanceof Timestamp) &&
     !(input instanceof GeoPoint) &&
     !(input instanceof Blob) &&
-    !(input instanceof DocumentKeyReference) &&
+    !(input instanceof DocumentReference) &&
     !(input instanceof FieldValueImpl)
   );
 }
-
-// TODO: Fix preconverter
 
 function validatePlainObject(
   message: string,
@@ -796,4 +748,9 @@ function fieldPathFromDotSeparatedString(
  */
 function errorMessage(error: Error | object): string {
   return error instanceof Error ? error.message : error.toString();
+}
+
+/** Checks `haystack` if FieldPath `needle` is present. Runs in O(n). */
+function fieldMaskContains(haystack: FieldPath[], needle: FieldPath): boolean {
+  return haystack.some(v => v.isEqual(needle));
 }

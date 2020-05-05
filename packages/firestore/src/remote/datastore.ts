@@ -39,7 +39,7 @@ import { AsyncQueue } from '../util/async_queue';
  */
 export class Datastore {
   // Make sure that the structural type of `Datastore` is unique.
-  // https://github.com/microsoft/TypeScript/issues/5451
+  // See https://github.com/microsoft/TypeScript/issues/5451
   private _ = undefined;
 }
 

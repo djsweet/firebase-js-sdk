@@ -47,7 +47,6 @@ import {
   wrapObject
 } from '../../util/helpers';
 import { ObjectValueBuilder } from '../../../src/model/object_value';
-import {PublicFieldValue} from "../../../src/api/database";
 
 describe('Mutation', () => {
   addEqualityMatcher();
@@ -136,7 +135,7 @@ describe('Mutation', () => {
       foo: { bar: 'bar-value', baz: 'baz-value' }
     });
     const patch = patchMutation('collection/key', {
-      'foo.bar': PublicFieldValue.delete()
+      'foo.bar': FieldValue.delete()
     });
 
     const patchedDoc = patch.applyToLocalView(baseDoc, baseDoc, timestamp);

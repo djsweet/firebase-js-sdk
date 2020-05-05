@@ -23,7 +23,6 @@ import { FieldPath } from './path';
 import { isServerTimestamp } from './server_timestamps';
 import { valueEquals, isMapValue, typeOrder } from './values';
 import { forEach } from '../util/obj';
-import { SortedSet } from '../util/sorted_set';
 
 export interface JsonObject<T> {
   [name: string]: T;
@@ -243,7 +242,7 @@ export class ObjectValueBuilder {
  * Returns a FieldMask built from all fields in a MapValue.
  */
 export function extractFieldMask(value: api.MapValue): FieldMask {
-  const fields : FieldPath[] = [];
+  const fields: FieldPath[] = [];
   forEach(value!.fields || {}, (key, value) => {
     const currentPath = new FieldPath([key]);
     if (isMapValue(value)) {
@@ -255,9 +254,9 @@ export function extractFieldMask(value: api.MapValue): FieldMask {
       } else {
         // For nested and non-empty ObjectValues, add the FieldPath of the
         // leaf nodes.
-        nestedFields.forEach(nestedPath => {
+        for (const nestedPath of nestedFields) {
           fields.push(currentPath.child(nestedPath));
-        });
+        }
       }
     } else {
       // For nested and non-empty ObjectValues, add the FieldPath of the leaf
