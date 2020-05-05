@@ -25,6 +25,8 @@ export { FieldPath } from '../src/api/field_path';
 export {
   getDocument,
   setDocument,
+  updateDocument,
+  deleteDocument,
   DocumentSnapshot,
   DocumentReference,
   CollectionReference

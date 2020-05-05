@@ -294,20 +294,21 @@ export class FieldPath {
 export function getDocument<T>(
   reference: DocumentReference<T>
 ): Promise<DocumentSnapshot<T>>;
-//
-// export function deleteDocument(reference: DocumentReference): Promise<void>;
-//
-// export function updateDocument(
-//   reference: DocumentReference,
-//   data: UpdateData
-// ): Promise<void>;
-//
-// export function updateDocument(
-//   field: string | FieldPath,
-//   value: any,
-//   ...moreFieldsAndValues: any[]
-// ): Promise<void>;
-//
+
+export function deleteDocument(reference: DocumentReference): Promise<void>;
+
+export function updateDocument(
+  reference: DocumentReference,
+  data: UpdateData
+): Promise<void>;
+
+export function updateDocument(
+  reference: DocumentReference,
+  field: string | FieldPath,
+  value: any,
+  ...moreFieldsAndValues: any[]
+): Promise<void>;
+
 export function setDocument<T>(
   reference: DocumentReference<T>,
   data: T,

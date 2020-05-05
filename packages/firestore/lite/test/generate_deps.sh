@@ -28,4 +28,6 @@ export TS_NODE_CACHE=NO
 export TS_NODE_COMPILER_OPTIONS='{"module":"commonjs"}' 
 export TS_NODE_PROJECT="$DIR/../../tsconfig.json"
 
+(cd $DIR/../../ ; yarn build:lite ); 
+
 $TSNODE $GENERATE_DEPS_JS "$@"

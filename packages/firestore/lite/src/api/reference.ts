@@ -30,11 +30,18 @@ import {
   invokeCommitRpc
 } from '../../../src/remote/datastore';
 import { UserDataWriter } from '../../../src/api/user_data_writer';
-import { Precondition } from '../../../src/model/mutation';
+import {DeleteMutation, Precondition} from '../../../src/model/mutation';
 import {
   DocumentKeyReference,
   UserDataReader
 } from '../../../src/api/user_data_reader';
+import {UpdateData} from "../../";
+import {FieldPath} from "../../";
+import {FieldPath as ExternalFieldPath} from "../../../src/api/field_path";
+import {
+  validateAtLeastNumberOfArgs,
+  validateExactNumberOfArgs
+} from "../../../src/util/input_validation";
 
 /**
  * A reference to a particular document in a collection in the database.
@@ -129,5 +136,51 @@ export async function setDocument<T>(
   await invokeCommitRpc(
     firestore._datastore!,
     parsed.toMutations(reference._key, Precondition.none())
+  );
+}
+
+
+export async function deleteDocument(reference: DocumentReference): Promise<void> {
+  const firestore = reference.firestore;
+  await firestore._ensureClientConfigured();
+  await invokeCommitRpc(
+    firestore._datastore!,
+    [      new DeleteMutation(reference._key, Precondition.none())]
+  );
+}
+
+export async function updateDocument(
+  reference: DocumentReference,
+  fieldOrUpdateData: string | ExternalFieldPath | firestore.UpdateData,
+  value?: unknown,
+  ...moreFieldsAndValues: unknown[]
+): Promise<void> {
+  const firestore = reference.firestore;
+  await firestore._ensureClientConfigured();
+  const dataReader = new UserDataReader(firestore._databaseId);
+
+  let ref;
+  let parsed;
+
+  if (
+    typeof fieldOrUpdateData === 'string' ||
+    fieldOrUpdateData instanceof ExternalFieldPath
+  ) {
+    parsed = dataReader.parseUpdateVarargs(
+      'updateDocument',
+      fieldOrUpdateData,
+      value,
+      moreFieldsAndValues
+    );
+  } else {
+    parsed = dataReader.parseUpdateData(
+      'WriteBatch.update',
+      fieldOrUpdateData
+    );
+  }
+
+  await invokeCommitRpc(
+    firestore._datastore!,
+    parsed.toMutations(reference._key, Precondition.exists(true))
   );
 }
