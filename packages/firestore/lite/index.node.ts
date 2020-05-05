@@ -30,5 +30,10 @@ export {
   CollectionReference
 } from './src/api/reference';
 
-export { deleteField,increment, serverTimestamp, arrayUnion, arrayRemove 
+export { 
+  deleteField,
+  increment, 
+  serverTimestamp, 
+  arrayUnion, 
+  arrayRemove 
  } from './src/api/field_value'
