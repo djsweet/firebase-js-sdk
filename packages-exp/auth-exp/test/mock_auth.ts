@@ -15,14 +15,15 @@
  * limitations under the License.
  */
 
-import { StsTokenManager } from '../src/core/user/token_manager';
 import { AuthImpl } from '../src/core/auth/auth_impl';
+import { StsTokenManager } from '../src/core/user/token_manager';
 import { UserImpl } from '../src/core/user/user_impl';
 import { Auth } from '../src/model/auth';
 import { User } from '../src/model/user';
 
 export const TEST_HOST = 'localhost';
 export const TEST_TOKEN_HOST = 'localhost/token';
+export const TEST_AUTH_DOMAIN = 'localhost';
 export const TEST_SCHEME = 'mock';
 export const TEST_KEY = 'test-api-key';
 
@@ -33,6 +34,7 @@ export const mockAuth: Auth = new AuthImpl(
     authDomain: TEST_AUTH_DOMAIN,
     apiHost: TEST_HOST,
     apiScheme: TEST_SCHEME,
+    tokenApiHost: TEST_TOKEN_HOST,
     sdkClientVersion: 'testSDK/0.0.0'
   },
   []
